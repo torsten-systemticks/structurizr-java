@@ -71,21 +71,10 @@ subprojects { proj ->
                             url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                         }
                     }
-
-                    developers {
-                        developer {
-                            id = "simon"
-                            name = "Simon Brown"
-                            email = "simon@structurizr.com"
-                        }
-                    }
                 }
             }
         }
     }
 
-    signing {
-        sign publishing.publications.mavenJava
-    }
 
 }
