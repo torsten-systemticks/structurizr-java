@@ -181,10 +181,11 @@ public final class StructurizrDslParser extends StructurizrDslTokens {
      * @param dslFile   a File representing the DSL file, and therefore where includes/images/etc should be loaded relative to
      * @throws StructurizrDslParserException when something goes wrong
      */
-    void parse(List<String> lines, File dslFile) throws StructurizrDslParserException {
+    public void parse(List<String> lines, File dslFile) throws StructurizrDslParserException {
         List<DslLine> dslLines = preProcessLines(lines);
 
         for (DslLine dslLine : dslLines) {
+            parseLineAt(dslLine.getLineNumber(), dslFile);
             boolean includeInDslSourceLines = true;
 
             String line = dslLine.getSource();
@@ -1031,4 +1032,7 @@ public final class StructurizrDslParser extends StructurizrDslTokens {
         return clazz.isAssignableFrom(contextStack.peek().getClass());
     }
 
+    void parseLineAt(int lineNumber, File dslFile) {
+        // only to be interceptable
+    }    
 }
