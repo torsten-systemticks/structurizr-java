@@ -184,7 +184,7 @@ public final class StructurizrDslParser extends StructurizrDslTokens {
      * @param dslFile   a File representing the DSL file, and therefore where includes/images/etc should be loaded relative to
      * @throws StructurizrDslParserException when something goes wrong
      */
-    void parse(List<String> lines, File dslFile, boolean fragment, boolean includeInDslSourceLines) throws StructurizrDslParserException {
+    public void parse(List<String> lines, File dslFile, boolean fragment, boolean includeInDslSourceLines) throws StructurizrDslParserException {
         List<DslLine> dslLines = preProcessLines(lines);
 
         for (DslLine dslLine : dslLines) {
