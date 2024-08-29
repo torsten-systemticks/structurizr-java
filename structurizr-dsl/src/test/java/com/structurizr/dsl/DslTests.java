@@ -1,7 +1,9 @@
 package com.structurizr.dsl;
 
 import com.structurizr.Workspace;
+import com.structurizr.documentation.Section;
 import com.structurizr.model.*;
+import com.structurizr.util.StringUtils;
 import com.structurizr.view.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,9 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -332,7 +332,7 @@ class DslTests extends AbstractTests {
                 "        }\n" +
                 "    }\n" +
                 "\n" +
-                "}\n", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
+                "}", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
     }
 
     @Test
@@ -364,23 +364,23 @@ class DslTests extends AbstractTests {
         assertEquals("workspace {\n" +
                 "\n" +
                 "    model {\n" +
-                "        !constant SOFTWARE_SYSTEM_NAME \"Software System 1\"\n" +
+                "        !var SOFTWARE_SYSTEM_NAME \"Software System 1\"\n" +
                 "        softwareSystem \"${SOFTWARE_SYSTEM_NAME}\" {\n" +
                 "            !docs ../../docs\n" +
                 "        }\n" +
                 "\n" +
-                "        !constant SOFTWARE_SYSTEM_NAME \"Software System 2\"\n" +
+                "        !var SOFTWARE_SYSTEM_NAME \"Software System 2\"\n" +
                 "        softwareSystem \"${SOFTWARE_SYSTEM_NAME}\" {\n" +
                 "            !docs ../../docs\n" +
                 "        }\n" +
                 "\n" +
-                "        !constant SOFTWARE_SYSTEM_NAME \"Software System 3\"\n" +
+                "        !var SOFTWARE_SYSTEM_NAME \"Software System 3\"\n" +
                 "        softwareSystem \"${SOFTWARE_SYSTEM_NAME}\" {\n" +
                 "            !docs ../../docs\n" +
                 "        }\n" +
                 "    }\n" +
                 "\n" +
-                "}\n", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
+                "}", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
     }
 
     @Test
@@ -415,7 +415,7 @@ class DslTests extends AbstractTests {
                 "        }\n" +
                 "    }\n" +
                 "\n" +
-                "}\n", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
+                "}", new String(Base64.getDecoder().decode(workspace.getProperties().get("structurizr.dsl"))));
     }
 
     @Test
@@ -692,9 +692,34 @@ class DslTests extends AbstractTests {
         Container container = softwareSystem.getContainerWithName("Container");
         Component component = container.getComponentWithName("Component");
 
-        assertEquals(1, parser.getWorkspace().getDocumentation().getSections().size());
-        assertEquals(1, softwareSystem.getDocumentation().getSections().size());
-        assertEquals(1, container.getDocumentation().getSections().size());
+        Collection<Section> sections = parser.getWorkspace().getDocumentation().getSections();
+        assertEquals(1, sections.size());
+        assertEquals("""
+            ## Workspace
+            
+            Content...""", sections.iterator().next().getContent());
+
+        sections = softwareSystem.getDocumentation().getSections();
+        assertEquals(1, sections.size());
+        assertEquals("""
+            ## Software System
+                           
+            Content...""", sections.iterator().next().getContent());
+
+        sections = container.getDocumentation().getSections();
+        assertEquals(1, sections.size());
+        assertEquals("""
+            ## Container
+                           
+            Content...""", sections.iterator().next().getContent());
+
+        sections = component.getDocumentation().getSections();
+        assertEquals(1, sections.size());
+        assertEquals("""
+            ## Component
+                           
+            Content...""", sections.iterator().next().getContent());
+
         assertEquals(1, component.getDocumentation().getSections().size());
     }
 
@@ -837,6 +862,17 @@ class DslTests extends AbstractTests {
     void test_dynamicViewWithCustomElements() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(new File("src/test/resources/dsl/dynamic-view-with-custom-elements.dsl"));
+    }
+
+    @Test
+    void test_dynamicViewWithExplicitOrdering() throws Exception {
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(new File("src/test/resources/dsl/dynamic-view-with-explicit-ordering.dsl"));
+        DynamicView view = parser.getWorkspace().getViews().getDynamicViews().iterator().next();
+        Set<RelationshipView> relationships = view.getRelationships();
+        Iterator<RelationshipView> it = relationships.iterator();
+        assertEquals("2", it.next().getOrder());
+        assertEquals("3", it.next().getOrder());
     }
 
     @Test
@@ -1042,6 +1078,164 @@ class DslTests extends AbstractTests {
     @Test
     void test_ScriptInDynamicView() throws Exception {
         File dslFile = new File("src/test/resources/dsl/script-in-dynamic-view.dsl");
+
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(dslFile);
+    }
+
+    @Test
+    void test_Enterprise() {
+        File dslFile = new File("src/test/resources/dsl/enterprise.dsl");
+
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse(dslFile);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("The enterprise keyword was previously deprecated, and has now been removed - please use group instead (https://docs.structurizr.com/dsl/language#group) at line 4 of " + dslFile.getAbsolutePath() + ": enterprise \"Name\" {", e.getMessage());
+        }
+    }
+
+    @Test
+    void test_UnbalancedCurlyBraces() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse("""
+                    workspace {
+                        model {
+                            person "User"
+                        }
+                    """);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("Unexpected end of DSL content - are one or more closing curly braces missing?", e.getMessage());
+        }
+    }
+
+    @Test
+    void test_Const() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse("""
+                    workspace {
+                        !const name value1
+                        !const name value2
+                    }
+                    """);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("A constant/variable \"name\" already exists at line 3: !const name value2", e.getMessage());
+        }
+    }
+
+    @Test
+    void test_Var_CannotOverrideConst() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse("""
+                    workspace {
+                        !const name value1
+                        !var name value2
+                    }
+                    """);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("A constant \"name\" already exists at line 3: !var name value2", e.getMessage());
+        }
+    }
+
+    @Test
+    void springPetClinic() throws Exception {
+        String springPetClinicHome = System.getenv().getOrDefault("SPRING_PETCLINIC_HOME", "");
+        System.out.println(springPetClinicHome);
+        if (!StringUtils.isNullOrEmpty(springPetClinicHome)) {
+            System.out.println("Running Spring PetClinic example...");
+
+            File workspaceFile = new File("src/test/resources/dsl/spring-petclinic/workspace.dsl");
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse(workspaceFile);
+
+            Person clinicEmployee = (Person)parser.getIdentifiersRegister().getElement("clinicEmployee");
+
+            Container webApplication = (Container)parser.getIdentifiersRegister().getElement("springPetClinic.webApplication");
+            Container relationalDatabaseSchema = (Container)parser.getIdentifiersRegister().getElement("springPetClinic.relationalDatabaseSchema");
+
+            assertEquals(7, webApplication.getComponents().size());
+
+            Component welcomeController = webApplication.getComponentWithName("Welcome Controller");
+            assertNotNull(welcomeController);
+            assertEquals("org.springframework.samples.petclinic.system.WelcomeController", welcomeController.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/system/WelcomeController.java").getAbsolutePath(), welcomeController.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/system/WelcomeController.java", welcomeController.getUrl());
+            assertSame(welcomeController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.welcomecontroller"));
+            assertTrue(clinicEmployee.hasEfferentRelationshipWith(welcomeController));
+
+            Component ownerController = webApplication.getComponentWithName("Owner Controller");
+            assertNotNull(ownerController);
+            assertEquals("org.springframework.samples.petclinic.owner.OwnerController", ownerController.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java").getAbsolutePath(), ownerController.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java", ownerController.getUrl());
+            assertSame(ownerController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.ownerController"));
+            assertTrue(clinicEmployee.hasEfferentRelationshipWith(ownerController));
+
+            Component petController = webApplication.getComponentWithName("Pet Controller");
+            assertNotNull(petController);
+            assertEquals("org.springframework.samples.petclinic.owner.PetController", petController.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/PetController.java").getAbsolutePath(), petController.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/PetController.java", petController.getUrl());
+            assertSame(petController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.petcontroller"));
+            assertTrue(clinicEmployee.hasEfferentRelationshipWith(petController));
+
+            Component vetController = webApplication.getComponentWithName("Vet Controller");
+            assertNotNull(vetController);
+            assertEquals("org.springframework.samples.petclinic.vet.VetController", vetController.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/vet/VetController.java").getAbsolutePath(), vetController.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/vet/VetController.java", vetController.getUrl());
+            assertSame(vetController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.vetcontroller"));
+            assertTrue(clinicEmployee.hasEfferentRelationshipWith(vetController));
+
+            Component visitController = webApplication.getComponentWithName("Visit Controller");
+            assertNotNull(visitController);
+            assertEquals("org.springframework.samples.petclinic.owner.VisitController", visitController.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java").getAbsolutePath(), visitController.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/VisitController.java", visitController.getUrl());
+            assertSame(visitController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.visitcontroller"));
+            assertTrue(clinicEmployee.hasEfferentRelationshipWith(visitController));
+
+            Component ownerRepository = webApplication.getComponentWithName("Owner Repository");
+            assertNotNull(ownerRepository);
+            assertEquals("org.springframework.samples.petclinic.owner.OwnerRepository", ownerRepository.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java").getAbsolutePath(), ownerRepository.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java", ownerRepository.getUrl());
+            assertSame(ownerRepository, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.ownerrepository"));
+            assertTrue(ownerRepository.hasEfferentRelationshipWith(relationalDatabaseSchema));
+
+            Component vetRepository = webApplication.getComponentWithName("Vet Repository");
+            assertNotNull(vetRepository);
+            assertEquals("org.springframework.samples.petclinic.vet.VetRepository", vetRepository.getProperties().get("component.type"));
+            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java").getAbsolutePath(), vetRepository.getProperties().get("component.src"));
+            assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java", vetRepository.getUrl());
+            assertSame(vetRepository, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.vetrepository"));
+            assertTrue(vetRepository.hasEfferentRelationshipWith(relationalDatabaseSchema));
+
+            assertTrue(welcomeController.getRelationships().isEmpty());
+            assertNotNull(petController.getEfferentRelationshipWith(ownerRepository));
+            assertNotNull(visitController.getEfferentRelationshipWith(ownerRepository));
+            assertNotNull(ownerController.getEfferentRelationshipWith(ownerRepository));
+            assertNotNull(vetController.getEfferentRelationshipWith(vetRepository));
+
+            // this checks that the component forEach { ... } lines don't get repeated in the outputted DSL source
+            String content = Files.readString(workspaceFile.toPath());
+            assertEquals(content, new String(Base64.getDecoder().decode(parser.getWorkspace().getProperties().get("structurizr.dsl"))));
+
+        } else {
+            System.out.println("Skipping Spring PetClinic example...");
+        }
+    }
+
+    @Test
+    void test_bulkOperations() throws Exception {
+        File dslFile = new File("src/test/resources/dsl/bulk-operations.dsl");
 
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(dslFile);

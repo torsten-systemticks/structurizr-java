@@ -49,18 +49,25 @@ abstract class DslContext {
         identifier = identifier.toLowerCase();
 
         if (identifiersRegister.getIdentifierScope() == IdentifierScope.Hierarchical) {
-            if (this instanceof ModelItemDslContext) {
-                ModelItemDslContext modelItemDslContext = (ModelItemDslContext)this;
-                if (modelItemDslContext.getModelItem() instanceof Element) {
-                    Element parent = (Element)modelItemDslContext.getModelItem();
-                    while (parent != null && element == null) {
-                        String parentIdentifier = identifiersRegister.findIdentifier(parent);
+            ElementDslContext elementDslContext = null;
+            if (this instanceof ElementDslContext) {
+                elementDslContext = (ElementDslContext)this;
+            } else if (this instanceof ElementsDslContext) {
+                ElementsDslContext elementsDslContext = (ElementsDslContext)this;
+                if (elementsDslContext.getParentDslContext() instanceof ElementDslContext) {
+                    elementDslContext = (ElementDslContext)elementsDslContext.getParentDslContext();
+                }
+            }
 
-                        element = identifiersRegister.getElement(parentIdentifier + "." + identifier);
-                        parent = parent.getParent();
+            if (elementDslContext != null) {
+                Element parent = elementDslContext.getElement();
+                while (parent != null && element == null) {
+                    String parentIdentifier = identifiersRegister.findIdentifier(parent);
 
-                        element = checkElementType(element, type);
-                    }
+                    element = identifiersRegister.getElement(parentIdentifier + "." + identifier);
+                    parent = parent.getParent();
+
+                    element = checkElementType(element, type);
                 }
             } else if (this instanceof DeploymentEnvironmentDslContext) {
                 DeploymentEnvironmentDslContext deploymentEnvironmentDslContext = (DeploymentEnvironmentDslContext)this;
@@ -96,7 +103,7 @@ abstract class DslContext {
         return identifiersRegister.getRelationship(identifier.toLowerCase());
     }
 
-    protected Class loadClass(String fqn, File dslFile) throws Exception {
+    protected <T> Class<? extends T> loadClass(String fqn, File dslFile) throws Exception {
         File pluginsDirectory = new File(dslFile.getParent(), PLUGINS_DIRECTORY_NAME);
         URL[] urls = new URL[0];
 
@@ -115,7 +122,7 @@ abstract class DslContext {
         }
 
         URLClassLoader childClassLoader = new URLClassLoader(urls, getClass().getClassLoader());
-        return childClassLoader.loadClass(fqn);
+        return (Class<? extends T>) childClassLoader.loadClass(fqn);
     }
 
     void end() {

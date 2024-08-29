@@ -19,6 +19,7 @@ class StructurizrDslTokens {
     static final String TECHNOLOGY_TOKEN = "technology";
     static final String INSTANCES_TOKEN = "instances";
     static final String TAGS_TOKEN = "tags";
+    static final String TAG_TOKEN = "tag";
     static final String URL_TOKEN = "url";
     static final String PROPERTIES_TOKEN = "properties";
     static final String PERSPECTIVES_TOKEN = "perspectives";
@@ -27,6 +28,7 @@ class StructurizrDslTokens {
     static final String SCOPE_TOKEN = "scope";
     static final String MODEL_TOKEN = "model";
     static final String VIEWS_TOKEN = "views";
+    static final String ENTERPRISE_TOKEN = "enterprise";
     static final String DEPLOYMENT_ENVIRONMENT_TOKEN = "deploymentEnvironment";
     static final String DEPLOYMENT_GROUP_TOKEN = "deploymentGroup";
     static final String DEPLOYMENT_NODE_TOKEN = "deploymentNode";
@@ -99,11 +101,27 @@ class StructurizrDslTokens {
     static final String ADRS_TOKEN = "!adrs";
     static final String DECISIONS_TOKEN = "!decisions";
     static final String CONSTANT_TOKEN = "!constant";
+    static final String CONST_TOKEN = "!const";
+    static final String VAR_TOKEN = "!var";
     static final String IDENTIFIERS_TOKEN = "!identifiers";
     static final String IMPLIED_RELATIONSHIPS_TOKEN = "!impliedRelationships";
     static final String REF_TOKEN = "!ref";
+    static final String ELEMENTS_TOKEN = "!elements";
+    static final String RELATIONSHIPS_TOKEN = "!relationships";
+
     static final String EXTEND_TOKEN = "!extend";
     static final String PLUGIN_TOKEN = "!plugin";
     static final String SCRIPT_TOKEN = "!script";
+
+    static final String COMPONENT_FINDER_TOKEN = "!components";
+    static final String COMPONENT_FINDER_CLASSES_TOKEN = "classes";
+    static final String COMPONENT_FINDER_SOURCE_TOKEN = "source";
+    static final String COMPONENT_FINDER_STRATEGY_TOKEN = "strategy";
+    static final String COMPONENT_FINDER_STRATEGY_TECHNOLOGY_TOKEN = "technology";
+    static final String COMPONENT_FINDER_STRATEGY_MATCHER_TOKEN = "matcher";
+    static final String COMPONENT_FINDER_STRATEGY_FILTER_TOKEN = "filter";
+    static final String COMPONENT_FINDER_STRATEGY_SUPPORTING_TYPES_TOKEN = "supportingTypes";
+    static final String COMPONENT_FINDER_STRATEGY_NAMING_TOKEN = "naming";
+    static final String COMPONENT_FINDER_STRATEGY_FOREACH_TOKEN = "forEach";
 
 }

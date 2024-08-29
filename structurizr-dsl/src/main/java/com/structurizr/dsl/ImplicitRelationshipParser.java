@@ -1,6 +1,10 @@
 package com.structurizr.dsl;
 
-import com.structurizr.model.*;
+import com.structurizr.model.Element;
+import com.structurizr.model.Relationship;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 final class ImplicitRelationshipParser extends AbstractRelationshipParser {
 
@@ -11,7 +15,7 @@ final class ImplicitRelationshipParser extends AbstractRelationshipParser {
     private final static int TECHNOLOGY_INDEX = 3;
     private final static int TAGS_INDEX = 4;
 
-    Relationship parse(ModelItemDslContext context, Tokens tokens) {
+    Relationship parse(ElementDslContext context, Tokens tokens) {
         // -> <identifier> [description] [technology] [tags]
 
         if (tokens.hasMoreThan(TAGS_INDEX)) {
@@ -24,9 +28,9 @@ final class ImplicitRelationshipParser extends AbstractRelationshipParser {
 
         String destinationId = tokens.get(DESTINATION_IDENTIFIER_INDEX);
 
-        Element sourceElement = (Element)context.getModelItem();
-        Element destinationElement = context.getElement(destinationId);
+        Element sourceElement = context.getElement();
 
+        Element destinationElement = context.getElement(destinationId);
         if (destinationElement == null) {
             throw new RuntimeException("The destination element \"" + destinationId + "\" does not exist");
         }
@@ -47,6 +51,48 @@ final class ImplicitRelationshipParser extends AbstractRelationshipParser {
         }
 
         return createRelationship(sourceElement, description, technology, tags, destinationElement);
+    }
+
+    Set<Relationship> parse(ElementsDslContext context, Tokens tokens) {
+        // -> <identifier> [description] [technology] [tags]
+
+        if (tokens.hasMoreThan(TAGS_INDEX)) {
+            throw new RuntimeException("Too many tokens, expected: " + GRAMMAR);
+        }
+
+        if (!tokens.includes(DESTINATION_IDENTIFIER_INDEX)) {
+            throw new RuntimeException("Expected: " + GRAMMAR);
+        }
+
+        Set<Element> sourceElements = context.getElements();
+
+        String destinationId = tokens.get(DESTINATION_IDENTIFIER_INDEX);
+        Element destinationElement = context.getElement(destinationId);
+        if (destinationElement == null) {
+            throw new RuntimeException("The destination element \"" + destinationId + "\" does not exist");
+        }
+
+        String description = "";
+        if (tokens.includes(DESCRIPTION_INDEX)) {
+            description = tokens.get(DESCRIPTION_INDEX);
+        }
+
+        String technology = "";
+        if (tokens.includes(TECHNOLOGY_INDEX)) {
+            technology = tokens.get(TECHNOLOGY_INDEX);
+        }
+
+        String[] tags = new String[0];
+        if (tokens.includes(TAGS_INDEX)) {
+            tags = tokens.get(TAGS_INDEX).split(",");
+        }
+
+        Set<Relationship> relationships = new LinkedHashSet<>();
+        for (Element sourceElement : sourceElements) {
+            relationships.add(createRelationship(sourceElement, description, technology, tags, destinationElement));
+        }
+
+        return relationships;
     }
 
 }

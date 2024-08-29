@@ -1,5 +1,8 @@
-!constant ORGANISATION_NAME "Organisation"
-!constant GROUP_NAME "Group"
+!const ORGANISATION_NAME "Organisation"
+!const GROUP_NAME "Group"
+
+!var name abc
+!var name ABC
 
 workspace "Name" "Description" {
 
@@ -20,6 +23,10 @@ workspace "Name" "Description" {
     // single line comment
 
     model {
+        !impliedRelationships false
+        !impliedRelationships "com.structurizr.model.CreateImpliedRelationshipsUnlessSameRelationshipExistsStrategy"
+        !impliedRelationships true
+
         properties {
             "Name" "Value"
         }
@@ -58,6 +65,10 @@ workspace "Name" "Description" {
                     }
                     perspectives {
                         "Security" "A description..."
+                    }
+
+                    !elements "element.parent==webApplication && element.technology==Spring MVC Controller" {
+                        tags "Spring MVC Controller"
                     }
                 }
 
@@ -230,6 +241,9 @@ workspace "Name" "Description" {
             user -> homePageController "Requests via web browser"
             homePageController -> user {
                 url "https://structurizr.com"
+                properties {
+                    "Name" "Value"
+                }
             }
 
             autoLayout

@@ -2,19 +2,17 @@ package com.structurizr.view;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.structurizr.PropertyHolder;
 import com.structurizr.model.Relationship;
 import com.structurizr.util.StringUtils;
 import com.structurizr.util.Url;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class represents an instance of a Relationship on a View.
  */
-public final class RelationshipView {
+public final class RelationshipView implements PropertyHolder, Comparable<RelationshipView> {
 
     private static final int START_OF_LINE = 0;
     private static final int END_OF_LINE = 100;
@@ -22,10 +20,11 @@ public final class RelationshipView {
     private Relationship relationship;
     private String id;
     private String description;
+    private Map<String, String> properties = new HashMap<>();
     private String url;
     private String order;
     private Boolean response;
-    private Set<Vertex> vertices = new LinkedHashSet<>();
+    private List<Vertex> vertices = new ArrayList<>();
 
     @JsonInclude(value = JsonInclude.Include.NON_NULL)
     private Routing routing;
@@ -91,6 +90,39 @@ public final class RelationshipView {
     }
 
     /**
+     * Gets the collection of name-value property pairs associated with this relationship view, as a Map.
+     *
+     * @return  a Map (String, String) (empty if there are no properties)
+     */
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(properties);
+    }
+
+    /**
+     * Adds a name-value pair property to this relationship view.
+     *
+     * @param name      the name of the property
+     * @param value     the value of the property
+     */
+    public void addProperty(String name, String value) {
+        if (name == null || name.trim().length() == 0) {
+            throw new IllegalArgumentException("A property name must be specified.");
+        }
+
+        if (value == null || value.trim().length() == 0) {
+            throw new IllegalArgumentException("A property value must be specified.");
+        }
+
+        properties.put(name, value);
+    }
+
+    void setProperties(Map<String, String> properties) {
+        if (properties != null) {
+            this.properties = new HashMap<>(properties);
+        }
+    }
+
+    /**
      * Gets the URL where more information about this relationship instance can be found.
      *
      * @return  a URL as a String
@@ -135,7 +167,7 @@ public final class RelationshipView {
      *
      * @param order     the order, as a String
      */
-    void setOrder(String order) {
+    public void setOrder(String order) {
         this.order = order;
     }
 
@@ -158,7 +190,7 @@ public final class RelationshipView {
      * @return  a collection of Vertex objects
      */
     public Collection<Vertex> getVertices() {
-        return new LinkedList<>(vertices);
+        return new ArrayList<>(vertices);
     }
 
     /**
@@ -168,7 +200,7 @@ public final class RelationshipView {
      */
     public void setVertices(Collection<Vertex> vertices) {
         if (vertices != null) {
-            this.vertices = new LinkedHashSet<>(vertices);
+            this.vertices = new ArrayList<>(vertices);
         }
     }
 
@@ -252,6 +284,14 @@ public final class RelationshipView {
             return (order != null ? order + ": " : "") + (description != null ? description + " " : "") + relationship.toString();
         }
         return "";
+    }
+
+    @Override
+    public int compareTo(RelationshipView relationshipView) {
+        String identifier1 = getId() + "/" + getOrder();
+        String identifier2 = relationshipView.getId() + "/" + relationshipView.getOrder();
+
+        return identifier1.compareTo(identifier2);
     }
 
 }

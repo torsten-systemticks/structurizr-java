@@ -5,13 +5,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.structurizr.PropertyHolder;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * The superclass for all views.
  */
-public abstract class View implements PropertyHolder {
+public abstract class View implements PropertyHolder, Comparable<View> {
 
     private String key;
     private boolean generatedKey = false;
@@ -133,7 +134,7 @@ public abstract class View implements PropertyHolder {
      * @return  a Map (String, String) (empty if there are no properties)
      */
     public Map<String, String> getProperties() {
-        return new HashMap<>(properties);
+        return Collections.unmodifiableMap(properties);
     }
 
     /**
@@ -158,6 +159,16 @@ public abstract class View implements PropertyHolder {
         if (properties != null) {
             this.properties = new HashMap<>(properties);
         }
+    }
+
+    @Override
+    public int compareTo(View view) {
+        int result = getOrder() - view.getOrder();
+        if (result == 0) {
+            result = getKey().compareToIgnoreCase(view.getKey());
+        }
+
+        return result;
     }
 
 }

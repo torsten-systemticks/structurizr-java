@@ -187,16 +187,19 @@ public class C4PlantUMLExporter extends AbstractPlantUMLExporter {
                         borderThickness = elementStyle.getStrokeWidth();
                     }
 
-                    writer.writeLine(String.format("AddElementTag(\"%s\", $bgColor=\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $sprite=\"%s\", $shadowing=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
+                    String line = String.format("AddElementTag(\"%s\", $bgColor=\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $sprite=\"%s\", $shadowing=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
                             tagList,
                             elementStyle.getBackground(),
                             elementStyle.getStroke(),
                             elementStyle.getColor(),
                             sprite,
                             elementStyle.getProperties().getOrDefault(C4PLANTUML_SHADOW, ""),
-                            elementStyle.getBorder(),
+                            elementStyle.getBorder().toString().toLowerCase(),
                             borderThickness
-                    ));
+                    );
+
+                    line = line.replace(", $borderThickness=\"1\")", ")");
+                    writer.writeLine(line);
                 }
             }
 
@@ -235,15 +238,18 @@ public class C4PlantUMLExporter extends AbstractPlantUMLExporter {
                         borderThickness = elementStyle.getStrokeWidth();
                     }
 
-                    writer.writeLine(String.format("AddBoundaryTag(\"%s\", $bgColor=\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $shadowing=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
+                    String line = String.format("AddBoundaryTag(\"%s\", $bgColor=\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $shadowing=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
                             tagList,
                             "#ffffff",
                             elementStyle.getStroke(),
                             elementStyle.getStroke(),
                             elementStyle.getProperties().getOrDefault(C4PLANTUML_SHADOW, ""),
-                            elementStyle.getBorder(),
+                            elementStyle.getBorder().toString().toLowerCase(),
                             borderThickness
-                    ));
+                    );
+
+                    line = line.replace(", $borderThickness=\"1\")", ")");
+                    writer.writeLine(line);
                 }
             }
         }
@@ -288,7 +294,6 @@ public class C4PlantUMLExporter extends AbstractPlantUMLExporter {
         }
 
         String color = "#cccccc";
-        String borderStyle = "Dashed";
         int borderThickness = 1;
 //        String icon = "";
 
@@ -302,9 +307,9 @@ public class C4PlantUMLExporter extends AbstractPlantUMLExporter {
         }
 
         if (elementStyleForGroup != null && !StringUtils.isNullOrEmpty(elementStyleForGroup.getStroke())) {
-            borderStyle = elementStyleForGroup.getStroke();
+            color = elementStyleForGroup.getStroke();
         } else if (elementStyleForAllGroups != null && !StringUtils.isNullOrEmpty(elementStyleForAllGroups.getStroke())) {
-            borderStyle = elementStyleForAllGroups.getStroke();
+            color = elementStyleForAllGroups.getStroke();
         }
 
         if (elementStyleForGroup != null && elementStyleForGroup.getStrokeWidth() != null) {
@@ -326,13 +331,15 @@ public class C4PlantUMLExporter extends AbstractPlantUMLExporter {
 //            icon = "\\n\\n<img:" + icon + "{scale=" + scale + "}>";
 //        }
 
-        writer.writeLine(String.format("AddBoundaryTag(\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
+        String line = String.format("AddBoundaryTag(\"%s\", $borderColor=\"%s\", $fontColor=\"%s\", $borderStyle=\"%s\", $borderThickness=\"%s\")",
                 group,
                 color,
                 color,
-                borderStyle,
-                borderThickness)
-        );
+                Border.Dashed.toString().toLowerCase(),
+                borderThickness);
+
+        line = line.replace(", $borderThickness=\"1\")", ")");
+        writer.writeLine(line);
 
         writer.writeLine(String.format("Boundary(group_%s, \"%s\", $tags=\"%s\") {", groupId, groupName, group));
         writer.indent();
