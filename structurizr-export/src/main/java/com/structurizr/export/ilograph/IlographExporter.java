@@ -16,10 +16,42 @@ import java.util.stream.Collectors;
  */
 public class IlographExporter extends AbstractWorkspaceExporter {
 
+    public static final String ILOGRAPH_IMPORTS = "ilograph.imports";
+    public static final String ILOGRAPH_ICON = "ilograph.icon";
+
     public WorkspaceExport export(Workspace workspace) {
         IndentingWriter writer = new IndentingWriter();
+
+        // Ilograph imports can be specified in the form:
+        //
+        // AWS:ilograph/aws
+        //
+        // Which gets exported as:
+        //
+        // imports:
+        //  - from: ilograph/aws
+        //    namespace: AWS
+        String commaSeparatedListOfImports = workspace.getProperties().get(ILOGRAPH_IMPORTS);
+        if (!StringUtils.isNullOrEmpty(commaSeparatedListOfImports)) {
+            writer.writeLine("imports:");
+
+            String[] ilographImports = commaSeparatedListOfImports.split(",");
+            for (String ilographImport : ilographImports) {
+                String[] parts = ilographImport.split(":");
+                if (parts.length == 2) {
+                    String namespace = parts[0];
+                    String from = parts[1];
+
+                    writer.writeLine("- from: " + from);
+                    writer.indent();
+                    writer.writeLine("namespace: " + namespace);
+                    writer.outdent();
+                }
+            }
+            writer.writeLine();
+        }
+
         writer.writeLine("resources:");
-        writer.writeLine();
         writer.indent();
 
         Model model = workspace.getModel();
@@ -216,6 +248,15 @@ public class IlographExporter extends AbstractWorkspaceExporter {
             writer.writeLine(String.format("backgroundColor: \"%s\"", elementStyle.getBackground()));
         }
         writer.writeLine(String.format("color: \"%s\"", elementStyle.getColor()));
+
+        String icon = elementStyle.getProperties().get(ILOGRAPH_ICON);
+        if (StringUtils.isNullOrEmpty(icon)) {
+            icon = elementStyle.getIcon();
+        }
+        if (!StringUtils.isNullOrEmpty(icon)) {
+            writer.writeLine(String.format("icon: \"%s\"", icon));
+        }
+
         writer.writeLine();
         writer.outdent();
     }

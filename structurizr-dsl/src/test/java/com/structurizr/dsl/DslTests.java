@@ -419,13 +419,18 @@ class DslTests extends AbstractTests {
     }
 
     @Test
-    void test_include_WhenRunningInRestrictedMode() throws Exception {
-        StructurizrDslParser parser = new StructurizrDslParser();
-        parser.setRestricted(true);
+    void test_includeLocalFile_ThrowsAnException_WhenRunningInRestrictedMode() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
 
-        // the model include will be ignored, so no software systems
-        parser.parse(new File("src/test/resources/dsl/include-file.dsl"));
-        assertEquals(0, model.getSoftwareSystems().size());
+            // the model include will be ignored, so no software systems
+            parser.parse(new File("src/test/resources/dsl/include-file.dsl"));
+            fail();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            assertTrue(e.getMessage().startsWith("!include <file> is not available when the parser is running in restricted mode"));
+        }
     }
 
     @ParameterizedTest
@@ -516,13 +521,53 @@ class DslTests extends AbstractTests {
     }
 
     @Test
-    void test_ref() throws Exception {
+    void test_findElement() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
-        parser.parse(new File("src/test/resources/dsl/ref.dsl"));
+        parser.parse(new File("src/test/resources/dsl/find-element.dsl"));
 
         assertNotNull(parser.getWorkspace().getModel().getElementWithCanonicalName("InfrastructureNode://Live/Amazon Web Services/New deployment node/New infrastructure node"));
         assertNotNull(parser.getWorkspace().getModel().getElementWithCanonicalName("InfrastructureNode://Live/Amazon Web Services/US-East-1/New deployment node 1/New infrastructure node 1"));
         assertNotNull(parser.getWorkspace().getModel().getElementWithCanonicalName("InfrastructureNode://Live/Amazon Web Services/US-East-1/New deployment node 2/New infrastructure node 2"));
+    }
+
+    @Test
+    void test_findElement_Hierarchical() throws Exception {
+        File dslFile = new File("src/test/resources/dsl/find-element-hierarchical.dsl");
+
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(dslFile);
+
+        Component component = parser.getWorkspace().getModel().getSoftwareSystemWithName("A").getContainerWithName("B").getComponentWithName("C");
+        assertEquals("Value1", component.getProperties().get("Name1"));
+        assertEquals("Value2", component.getProperties().get("Name2"));
+        assertEquals("Value3", component.getProperties().get("Name3"));
+    }
+
+    @Test
+    void test_findElements_InFlatGroup() throws Exception {
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(new File("src/test/resources/dsl/find-elements-in-flat-group.dsl"));
+
+        Person user = parser.getWorkspace().getModel().getPersonWithName("User");
+        assertTrue(user.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("A"), "Uses"));
+        assertTrue(user.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("B"), "Uses"));
+        assertTrue(user.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("C"), "Uses"));
+    }
+
+    @Test
+    void test_findElements_InNestedGroup() throws Exception {
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(new File("src/test/resources/dsl/find-elements-in-nested-group.dsl"));
+
+        Person user1 = parser.getWorkspace().getModel().getPersonWithName("User 1");
+        assertTrue(user1.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("A"), "Uses"));
+        assertTrue(user1.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("B"), "Uses"));
+        assertTrue(user1.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("C"), "Uses"));
+
+        Person user2 = parser.getWorkspace().getModel().getPersonWithName("User 2");
+        assertTrue(user2.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("A"), "Uses"));
+        assertFalse(user2.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("B"), "Uses"));
+        assertFalse(user2.hasEfferentRelationshipWith(parser.getWorkspace().getModel().getSoftwareSystemWithName("C"), "Uses"));
     }
 
     @Test
@@ -544,6 +589,21 @@ class DslTests extends AbstractTests {
     void test_parallel2() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(new File("src/test/resources/dsl/parallel2.dsl"));
+
+        assertFalse(parser.getWorkspace().isEmpty());
+        DynamicView view = parser.getWorkspace().getViews().getDynamicViews().iterator().next();
+        List<RelationshipView> relationships = new ArrayList<>(view.getRelationships());
+        assertEquals(4, relationships.size());
+        assertEquals("1", relationships.get(0).getOrder());
+        assertEquals("2", relationships.get(1).getOrder());
+        assertEquals("2", relationships.get(2).getOrder());
+        assertEquals("3", relationships.get(3).getOrder());
+    }
+
+    @Test
+    void test_parallel3() throws Exception {
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(new File("src/test/resources/dsl/parallel3.dsl"));
 
         assertFalse(parser.getWorkspace().isEmpty());
         DynamicView view = parser.getWorkspace().getViews().getDynamicViews().iterator().next();
@@ -636,6 +696,19 @@ class DslTests extends AbstractTests {
     }
 
     @Test
+    void test_plugin_ThrowsAnException_WhenTheParserIsRunningInRestrictedMode() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
+            parser.parse(new File("src/test/resources/dsl/plugin-without-parameters.dsl"));
+            fail();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            assertTrue(e.getMessage().startsWith("!plugin is not available when the parser is running in restricted mode"));
+        }
+    }
+
+    @Test
     void test_pluginWithoutParameters() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(new File("src/test/resources/dsl/plugin-without-parameters.dsl"));
@@ -649,6 +722,18 @@ class DslTests extends AbstractTests {
         parser.parse(new File("src/test/resources/dsl/plugin-with-parameters.dsl"));
 
         assertNotNull(parser.getWorkspace().getModel().getPersonWithName("Java"));
+    }
+
+    @Test
+    void test_script_ThrowsAnException_WhenTheParserIsInRestrictedMode() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
+            parser.parse(new File("src/test/resources/dsl/script-external.dsl"));
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().startsWith("!script is not available when the parser is running in restricted mode"));
+        }
     }
 
     @Test
@@ -724,6 +809,18 @@ class DslTests extends AbstractTests {
     }
 
     @Test
+    void test_docs_ThrowsAnException_WhenTheParserIsInRestrictedMode() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
+            parser.parse(new File("src/test/resources/dsl/docs/workspace.dsl"));
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().startsWith("!docs is not available when the parser is running in restricted mode"));
+        }
+    }
+
+    @Test
     void test_decisions() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(new File("src/test/resources/dsl/decisions/workspace.dsl"));
@@ -741,6 +838,18 @@ class DslTests extends AbstractTests {
 
         // log4brains decisions
         assertEquals(4, component.getDocumentation().getDecisions().size());
+    }
+
+    @Test
+    void test_decisions_ThrowsAnException_WhenTheParserIsInRestrictedMode() {
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
+            parser.parse(new File("src/test/resources/dsl/decisions/workspace.dsl"));
+            fail();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().startsWith("!adrs is not available when the parser is running in restricted mode"));
+        }
     }
 
     @Test
@@ -926,6 +1035,20 @@ class DslTests extends AbstractTests {
     }
 
     @Test
+    void test_relationshipWithoutIdentifier() throws Exception {
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(new File("src/test/resources/dsl/relationship-without-identifier.dsl"));
+
+        Workspace workspace = parser.getWorkspace();
+        IdentifiersRegister register = parser.getIdentifiersRegister();
+        assertEquals(1, workspace.getModel().getRelationships().size());
+        Relationship relationship = workspace.getModel().getRelationships().iterator().next();
+
+        assertTrue(register.findIdentifier(relationship).matches("[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}"));
+        assertNull(relationship.getProperties().get("structurizr.dsl.identifier")); // identifier is not included in model
+    }
+
+    @Test
     void test_imageViews_ViaFiles() throws Exception {
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(new File("src/test/resources/dsl/image-views/workspace-via-file.dsl"));
@@ -935,13 +1058,13 @@ class DslTests extends AbstractTests {
 
         ImageView plantumlView = (ImageView)workspace.getViews().getViewWithKey("plantuml");
         assertEquals("diagram.puml", plantumlView.getTitle());
-        assertEquals("http://localhost:7777/png/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80", plantumlView.getContent());
-        assertEquals("image/png", plantumlView.getContentType());
+        assertEquals("http://localhost:7777/svg/SoWkIImgAStDuNBAJrBGjLDmpCbCJbMmKiX8pSd9vt98pKi1IW80", plantumlView.getContent());
+        assertEquals("image/svg+xml", plantumlView.getContentType());
 
         ImageView mermaidView = (ImageView)workspace.getViews().getViewWithKey("mermaid");
         assertEquals("diagram.mmd", mermaidView.getTitle());
-        assertEquals("http://localhost:8888/img/Zmxvd2NoYXJ0IFRECiAgICBTdGFydCAtLT4gU3RvcA==?type=png", mermaidView.getContent());
-        assertEquals("image/png", mermaidView.getContentType());
+        assertEquals("http://localhost:8888/svg/Zmxvd2NoYXJ0IFRECiAgICBTdGFydCAtLT4gU3RvcA==", mermaidView.getContent());
+        assertEquals("image/svg+xml", mermaidView.getContentType());
 
         ImageView krokiView = (ImageView)workspace.getViews().getViewWithKey("kroki");
         assertEquals("diagram.dot", krokiView.getTitle());
@@ -1097,6 +1220,19 @@ class DslTests extends AbstractTests {
     }
 
     @Test
+    void test_Constant() {
+        File dslFile = new File("src/test/resources/dsl/constant.dsl");
+
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse(dslFile);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("!constant was previously deprecated, and has now been removed - please use !const or !var instead at line 3 of " + dslFile.getAbsolutePath() + ": !constant NAME VALUE", e.getMessage());
+        }
+    }
+
+    @Test
     void test_UnbalancedCurlyBraces() {
         try {
             StructurizrDslParser parser = new StructurizrDslParser();
@@ -1151,6 +1287,17 @@ class DslTests extends AbstractTests {
         if (!StringUtils.isNullOrEmpty(springPetClinicHome)) {
             System.out.println("Running Spring PetClinic example...");
 
+            try {
+                File workspaceFile = new File("src/test/resources/dsl/spring-petclinic/workspace.dsl");
+                StructurizrDslParser parser = new StructurizrDslParser();
+                parser.setRestricted(true);
+                parser.parse(workspaceFile);
+                fail();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                assertTrue(e.getMessage().startsWith("!components is not available when the parser is running in restricted mode"));
+            }
+
             File workspaceFile = new File("src/test/resources/dsl/spring-petclinic/workspace.dsl");
             StructurizrDslParser parser = new StructurizrDslParser();
             parser.parse(workspaceFile);
@@ -1165,7 +1312,7 @@ class DslTests extends AbstractTests {
             Component welcomeController = webApplication.getComponentWithName("Welcome Controller");
             assertNotNull(welcomeController);
             assertEquals("org.springframework.samples.petclinic.system.WelcomeController", welcomeController.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/system/WelcomeController.java").getAbsolutePath(), welcomeController.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/system/WelcomeController.java", welcomeController.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/system/WelcomeController.java", welcomeController.getUrl());
             assertSame(welcomeController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.welcomecontroller"));
             assertTrue(clinicEmployee.hasEfferentRelationshipWith(welcomeController));
@@ -1173,7 +1320,7 @@ class DslTests extends AbstractTests {
             Component ownerController = webApplication.getComponentWithName("Owner Controller");
             assertNotNull(ownerController);
             assertEquals("org.springframework.samples.petclinic.owner.OwnerController", ownerController.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java").getAbsolutePath(), ownerController.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/owner/OwnerController.java", ownerController.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/OwnerController.java", ownerController.getUrl());
             assertSame(ownerController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.ownerController"));
             assertTrue(clinicEmployee.hasEfferentRelationshipWith(ownerController));
@@ -1181,7 +1328,7 @@ class DslTests extends AbstractTests {
             Component petController = webApplication.getComponentWithName("Pet Controller");
             assertNotNull(petController);
             assertEquals("org.springframework.samples.petclinic.owner.PetController", petController.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/PetController.java").getAbsolutePath(), petController.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/owner/PetController.java", petController.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/PetController.java", petController.getUrl());
             assertSame(petController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.petcontroller"));
             assertTrue(clinicEmployee.hasEfferentRelationshipWith(petController));
@@ -1189,7 +1336,7 @@ class DslTests extends AbstractTests {
             Component vetController = webApplication.getComponentWithName("Vet Controller");
             assertNotNull(vetController);
             assertEquals("org.springframework.samples.petclinic.vet.VetController", vetController.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/vet/VetController.java").getAbsolutePath(), vetController.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/vet/VetController.java", vetController.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/vet/VetController.java", vetController.getUrl());
             assertSame(vetController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.vetcontroller"));
             assertTrue(clinicEmployee.hasEfferentRelationshipWith(vetController));
@@ -1197,26 +1344,28 @@ class DslTests extends AbstractTests {
             Component visitController = webApplication.getComponentWithName("Visit Controller");
             assertNotNull(visitController);
             assertEquals("org.springframework.samples.petclinic.owner.VisitController", visitController.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/VisitController.java").getAbsolutePath(), visitController.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/owner/VisitController.java", visitController.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/VisitController.java", visitController.getUrl());
             assertSame(visitController, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.visitcontroller"));
             assertTrue(clinicEmployee.hasEfferentRelationshipWith(visitController));
 
             Component ownerRepository = webApplication.getComponentWithName("Owner Repository");
             assertNotNull(ownerRepository);
+            assertEquals("Repository class for Owner domain objects All method names are compliant with Spring Data naming conventions so this interface can easily be extended for Spring Data.", ownerRepository.getDescription());
             assertEquals("org.springframework.samples.petclinic.owner.OwnerRepository", ownerRepository.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java").getAbsolutePath(), ownerRepository.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/owner/OwnerRepository.java", ownerRepository.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/owner/OwnerRepository.java", ownerRepository.getUrl());
             assertSame(ownerRepository, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.ownerrepository"));
-            assertTrue(ownerRepository.hasEfferentRelationshipWith(relationalDatabaseSchema));
+            assertTrue(ownerRepository.hasEfferentRelationshipWith(relationalDatabaseSchema, "Reads from and writes to"));
 
             Component vetRepository = webApplication.getComponentWithName("Vet Repository");
             assertNotNull(vetRepository);
+            assertEquals("Repository class for Vet domain objects All method names are compliant with Spring Data naming conventions so this interface can easily be extended for Spring Data.", vetRepository.getDescription());
             assertEquals("org.springframework.samples.petclinic.vet.VetRepository", vetRepository.getProperties().get("component.type"));
-            assertEquals(new File(springPetClinicHome, "src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java").getAbsolutePath(), vetRepository.getProperties().get("component.src"));
+            assertEquals("org/springframework/samples/petclinic/vet/VetRepository.java", vetRepository.getProperties().get("component.src"));
             assertEquals("https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/vet/VetRepository.java", vetRepository.getUrl());
             assertSame(vetRepository, parser.getIdentifiersRegister().getElement("springPetClinic.webApplication.vetrepository"));
-            assertTrue(vetRepository.hasEfferentRelationshipWith(relationalDatabaseSchema));
+            assertTrue(vetRepository.hasEfferentRelationshipWith(relationalDatabaseSchema, "Reads from and writes to"));
 
             assertTrue(welcomeController.getRelationships().isEmpty());
             assertNotNull(petController.getEfferentRelationshipWith(ownerRepository));
@@ -1239,6 +1388,58 @@ class DslTests extends AbstractTests {
 
         StructurizrDslParser parser = new StructurizrDslParser();
         parser.parse(dslFile);
+    }
+
+    @Test
+    void test_ImageView_WhenParserIsInRestrictedMode() {
+        File dslFile = new File("src/test/resources/dsl/image-view.dsl");
+
+        try {
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.setRestricted(true);
+            parser.parse(dslFile);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertEquals("Images must be specified as a URL when running in restricted mode at line 5 of " + dslFile.getAbsolutePath() + ": image image.png", e.getMessage());
+        }
+    }
+
+    @Test
+    void test_sourceIsRetained() throws Exception {
+        File parentDslFile = new File("src/test/resources/dsl/source-parent.dsl");
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(parentDslFile);
+        Workspace workspace = parser.getWorkspace();
+        assertEquals("""
+workspace {
+
+    model {
+        a = softwareSystem "A"
+    }
+
+}""", DslUtils.getDsl(workspace));
+
+        File childDslFile = new File("src/test/resources/dsl/source-child.dsl");
+        parser = new StructurizrDslParser();
+        parser.parse(childDslFile);
+        workspace = parser.getWorkspace();
+        assertEquals("""
+workspace extends source-parent.dsl {
+
+    model {
+        b = softwareSystem "B"
+    }
+
+}""", DslUtils.getDsl(workspace));
+    }
+
+    @Test
+    void test_sourceIsNotRetained() throws Exception {
+        File parentDslFile = new File("src/test/resources/dsl/source-not-retained.dsl");
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.parse(parentDslFile);
+        Workspace workspace = parser.getWorkspace();
+        assertNull(workspace.getProperties().get(DslUtils.STRUCTURIZR_DSL_PROPERTY_NAME));
     }
 
 }

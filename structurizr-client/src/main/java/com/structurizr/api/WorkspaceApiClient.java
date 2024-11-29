@@ -32,7 +32,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
-import java.util.Properties;
 
 /**
  * A client for the Structurizr workspace API that allows you to get and put Structurizr workspaces in a JSON format.
@@ -40,11 +39,13 @@ import java.util.Properties;
 public class WorkspaceApiClient extends AbstractApiClient {
 
     private static final Log log = LogFactory.getLog(WorkspaceApiClient.class);
+    private static final String MAIN_BRANCH = "main";
 
     private String user;
 
     private String apiKey;
     private String apiSecret;
+    private String branch = "";
 
     private EncryptionStrategy encryptionStrategy;
 
@@ -109,6 +110,14 @@ public class WorkspaceApiClient extends AbstractApiClient {
         }
 
         this.apiSecret = apiSecret;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     /**
@@ -224,7 +233,14 @@ public class WorkspaceApiClient extends AbstractApiClient {
 
         try (CloseableHttpClient httpClient = HttpClients.createSystem()) {
             log.info("Getting workspace with ID " + workspaceId);
-            HttpGet httpGet = new HttpGet(url + WORKSPACE_PATH + "/" + workspaceId);
+
+            HttpGet httpGet;
+            if (StringUtils.isNullOrEmpty(branch) || branch.equalsIgnoreCase(MAIN_BRANCH)) {
+                httpGet = new HttpGet(url + WORKSPACE_PATH + "/" + workspaceId);
+            } else {
+                httpGet = new HttpGet(url + WORKSPACE_PATH + "/" + workspaceId + "/branch/" + branch);
+            }
+
             addHeaders(httpGet, "", "");
             debugRequest(httpGet, null);
 
@@ -296,7 +312,12 @@ public class WorkspaceApiClient extends AbstractApiClient {
             workspace.setLastModifiedAgent(agent);
             workspace.setLastModifiedUser(getUser());
 
-            HttpPut httpPut = new HttpPut(url + WORKSPACE_PATH + "/" + workspaceId);
+            HttpPut httpPut;
+            if (StringUtils.isNullOrEmpty(branch)) {
+                httpPut = new HttpPut(url + WORKSPACE_PATH + "/" + workspaceId);
+            } else {
+                httpPut = new HttpPut(url + WORKSPACE_PATH + "/" + workspaceId + "/branch/" + branch);
+            }
 
             StringWriter stringWriter = new StringWriter();
             if (encryptionStrategy == null) {
@@ -395,7 +416,7 @@ public class WorkspaceApiClient extends AbstractApiClient {
 
     private String createArchiveFileName(long workspaceId) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-        return "structurizr-" + workspaceId + "-" + sdf.format(new Date()) + ".json";
+        return "structurizr-" + workspaceId + "-" + (StringUtils.isNullOrEmpty(branch) ? "" : (branch + "-")) + sdf.format(new Date()) + ".json";
     }
 
     public void setUser(String user) {

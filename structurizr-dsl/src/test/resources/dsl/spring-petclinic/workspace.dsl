@@ -12,6 +12,7 @@ workspace "Spring PetClinic" "A C4 model of the Spring PetClinic sample app (htt
             relationalDatabaseSchema = container "Relational Database Schema" {
                 description "Stores information regarding the veterinarians, the clients, and their pets."
                 technology "Relational Database Schema"
+                url "https://github.com/spring-projects/spring-petclinic/tree/main/src/main/resources/db"
                 tag "Relational Database Schema"
             }
 
@@ -22,10 +23,12 @@ workspace "Spring PetClinic" "A C4 model of the Spring PetClinic sample app (htt
                 !components {
                     classes "${SPRING_PETCLINIC_HOME}/target/spring-petclinic-3.3.0-SNAPSHOT.jar"
                     source "${SPRING_PETCLINIC_HOME}/src/main/java"
+                    filter include fqn-regex "org.springframework.samples.petclinic..*"
                     strategy {
                         technology "Spring MVC Controller"
                         matcher annotation "org.springframework.stereotype.Controller"
-                        filter excludeRegex ".*.CrashController"
+                        filter exclude fqn-regex ".*.CrashController"
+                        url prefix-src "https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java"
                         forEach {
                             clinicEmployee -> this "Uses"
                             tag "Spring MVC Controller"
@@ -34,15 +37,13 @@ workspace "Spring PetClinic" "A C4 model of the Spring PetClinic sample app (htt
                     strategy {
                         technology "Spring Data Repository"
                         matcher implements "org.springframework.data.repository.Repository"
+                        description first-sentence
+                        url prefix-src "https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java"
                         forEach {
                             -> relationalDatabaseSchema "Reads from and writes to"
                             tag "Spring Data Repository"
                         }
                     }
-                }
-
-                !script groovy {
-                    element.components.each { it.url = it.properties["component.src"].replace(System.getenv("SPRING_PETCLINIC_HOME") + "/src/main/java", "https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java") }
                 }
             }
         }

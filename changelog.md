@@ -1,16 +1,46 @@
 # Changelog
 
-## unreleased
+## 3.2.0 (unreleased)
 
+- structurizr-dsl: Adds support for `element!=` expressions.
+- structurizr-dsl: `!elements` and `!relationships` now work inside deployment environment blocks.
+
+## 3.1.0 (4th November 2024)
+
+- structurizr-client: Workspace archive file now includes the branch name in the filename.
+- structurizr-component: Adds `ImplementationWithPrefixSupportingTypesStrategy`.
+- structurizr-component: Adds `ImplementationWithSuffixSupportingTypesStrategy`.
+- structurizr-dsl: Adds `supportingTypes implementation-prefix <prefix>`.
+- structurizr-dsl: Adds `supportingTypes implementation-suffix <suffix>`.
+- structurizr-dsl: Fixes https://github.com/structurizr/java/issues/346 (`// comment \` joins lines).
+- structurizr-dsl: Anonymous identifiers for relationships (i.e. relationships not assigned to an identifier) are excluded from the model, and therefore also excluded from the serialised JSON.
+- structurizr-dsl: Adds a way to configure whether the DSL source is retained via a workspace property named `structurizr.dsl.source` - `true` (default) or `false`.
+- structurizr-dsl: Adds the ability to define a PlantUML/Mermaid image view that is an export of a workspace view.
+- structurizr-dsl: Adds support for `url`, `properties`, and `perspectives` nested inside `!elements` and `!relationships`.
+- structurizr-dsl: Fixes https://github.com/structurizr/java/issues/347 (`->container->` expression does not work as expected in deployment view).
+- structurizr-dsl: Adds support for `!elements group` (https://github.com/structurizr/java/issues/351).
+
+## 3.0.0 (19th September 2024)
+
+- structurizr-client: Adds support to get/put workspace branches on the [cloud service](https://docs.structurizr.com/cloud/workspace-branches) and [on-premises installation](https://docs.structurizr.com/onpremises/workspace-branches).
 - structurizr-core: Adds name-value properties to dynamic view relationship views (https://github.com/structurizr/java/issues/316).
 - structurizr-component: Initial rewrite of the original `structurizr-analysis` library - provides a way to automatically find components in a Java codebase.
+- structurizr-dsl: Removes deprecated `!constant` keyword.
 - structurizr-dsl: Adds name-value properties to dynamic view relationship views.
 - structurizr-dsl: Fixes https://github.com/structurizr/java/issues/312 (!include doesn't work with files encoded as UTF-8 BOM).
 - structurizr-dsl: Adds a way to explicitly specify the order of relationships in dynamic views.
-- structurizr-dsl: Adds support for element technology expressions (e.g. "element.technology==Java").
+- structurizr-dsl: Adds support for element technology expressions (e.g. `element.technology==Java` and `element.technology!=Java`).
+- structurizr-dsl: Deprecates `!ref` and `!extend`.
+- structurizr-dsl: Adds an `!element` keyword that can be used to find a single element by identifier or canonical name (replaces `!ref` and `!extend`).
 - structurizr-dsl: Adds an `!elements` keyword that can be used to find a set of elements via an expression.
+- structurizr-dsl: Adds an `!relationship` keyword that can be used to find a single relationship by identifier (replaces `!ref` and `!extend`).
 - structurizr-dsl: Adds a `!relationships` keyword that can be used to find a set of relationships via an expression.
-- structurizr-dsl: Adds a DSL wrapper around the `structurizr-component` component finder.
+- structurizr-dsl: Adds a DSL wrapper around the `structurizr-component` component finder (`!components`).
+- structurizr-dsl: Adds support for local theme files to be specified via `theme` (https://github.com/structurizr/java/issues/331).
+- structurizr-dsl: An exception is now thrown when trying to use disallowed features in restricted mode (e.g. `!docs`, `!include <file>`, etc).
+- structurizr-export: Adds support for icons to the Ilograph exporter (https://github.com/structurizr/java/issues/332).
+- structurizr-export: Adds support for imports to the Ilograph exporter (https://github.com/structurizr/java/issues/332).
+- structurizr-export: Fixes https://github.com/structurizr/java/issues/337 (Malformed subgraph name in Mermaid render).
 
 ## 2.2.0 (2nd July 2024)
 

@@ -27,6 +27,7 @@ workspace "Name" "Description" {
         !impliedRelationships "com.structurizr.model.CreateImpliedRelationshipsUnlessSameRelationshipExistsStrategy"
         !impliedRelationships true
 
+        // single line comment with long line split character \
         properties {
             "Name" "Value"
         }
@@ -68,7 +69,15 @@ workspace "Name" "Description" {
                     }
 
                     !elements "element.parent==webApplication && element.technology==Spring MVC Controller" {
-                        tags "Spring MVC Controller"
+                        tag "Tag 1"
+                        tags "Tag 2, Tag 3"
+                        url "https://example.com"
+                        properties {
+                            "type" "Spring MVC Controller"
+                        }
+                        perspectives {
+                            "Owner" "Team A"
+                        }
                     }
                 }
 
@@ -139,6 +148,18 @@ workspace "Name" "Description" {
                     "Security" "A description..."
                 }
 
+            }
+        }
+
+        !relationships "*->*" {
+            tag "Tag 1"
+            tags "Tag 2, Tag 3"
+            url "https://example.com"
+            properties {
+                name value
+            }
+            perspectives {
+                name value
             }
         }
     }

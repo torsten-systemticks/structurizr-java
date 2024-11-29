@@ -1,7 +1,6 @@
 package com.structurizr.component;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 final class DiscoveredComponent {
 
@@ -9,6 +8,9 @@ final class DiscoveredComponent {
     private final String name;
     private String description;
     private String technology;
+    private String url;
+    private final List<String> tags = new ArrayList<>();
+    private final Map<String, String> properties = new HashMap<>();
     private final Set<Type> supportingTypes = new HashSet<>();
 
     private ComponentFinderStrategy componentFinderStrategy;
@@ -44,6 +46,30 @@ final class DiscoveredComponent {
 
     void setTechnology(String technology) {
         this.technology = technology;
+    }
+
+    String getUrl() {
+        return url;
+    }
+
+    void setUrl(String url) {
+        this.url = url;
+    }
+
+    void addTags(List<String> tags) {
+        this.tags.addAll(tags);
+    }
+
+    List<String> getTags() {
+        return List.copyOf(tags);
+    }
+
+    void addProperty(String key, String value) {
+        properties.put(key, value);
+    }
+
+    Map<String, String> getProperties() {
+        return Map.copyOf(properties);
     }
 
     Set<Type> getSupportingTypes() {

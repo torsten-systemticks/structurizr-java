@@ -105,23 +105,30 @@ class StructurizrDslTokens {
     static final String VAR_TOKEN = "!var";
     static final String IDENTIFIERS_TOKEN = "!identifiers";
     static final String IMPLIED_RELATIONSHIPS_TOKEN = "!impliedRelationships";
-    static final String REF_TOKEN = "!ref";
-    static final String ELEMENTS_TOKEN = "!elements";
-    static final String RELATIONSHIPS_TOKEN = "!relationships";
 
-    static final String EXTEND_TOKEN = "!extend";
+    static final String REF_TOKEN = "!ref"; // deprecated
+    static final String EXTEND_TOKEN = "!extend"; // deprecated
+
+    static final String FIND_ELEMENT_TOKEN = "!element";
+    static final String FIND_ELEMENTS_TOKEN = "!elements";
+    static final String FIND_RELATIONSHIP_TOKEN = "!relationship";
+    static final String FIND_RELATIONSHIPS_TOKEN = "!relationships";
+
     static final String PLUGIN_TOKEN = "!plugin";
     static final String SCRIPT_TOKEN = "!script";
 
     static final String COMPONENT_FINDER_TOKEN = "!components";
     static final String COMPONENT_FINDER_CLASSES_TOKEN = "classes";
     static final String COMPONENT_FINDER_SOURCE_TOKEN = "source";
+    static final String COMPONENT_FINDER_FILTER_TOKEN = "filter";
     static final String COMPONENT_FINDER_STRATEGY_TOKEN = "strategy";
     static final String COMPONENT_FINDER_STRATEGY_TECHNOLOGY_TOKEN = "technology";
     static final String COMPONENT_FINDER_STRATEGY_MATCHER_TOKEN = "matcher";
     static final String COMPONENT_FINDER_STRATEGY_FILTER_TOKEN = "filter";
     static final String COMPONENT_FINDER_STRATEGY_SUPPORTING_TYPES_TOKEN = "supportingTypes";
-    static final String COMPONENT_FINDER_STRATEGY_NAMING_TOKEN = "naming";
+    static final String COMPONENT_FINDER_STRATEGY_NAME_TOKEN = "name";
+    static final String COMPONENT_FINDER_STRATEGY_DESCRIPTION_TOKEN = "description";
+    static final String COMPONENT_FINDER_STRATEGY_URL_TOKEN = "url";
     static final String COMPONENT_FINDER_STRATEGY_FOREACH_TOKEN = "forEach";
 
 }
