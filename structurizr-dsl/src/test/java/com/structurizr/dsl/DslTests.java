@@ -4,6 +4,7 @@ import com.structurizr.Workspace;
 import com.structurizr.documentation.Section;
 import com.structurizr.model.*;
 import com.structurizr.util.StringUtils;
+import com.structurizr.util.WorkspaceUtils;
 import com.structurizr.view.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -1440,6 +1441,33 @@ workspace extends source-parent.dsl {
         parser.parse(parentDslFile);
         Workspace workspace = parser.getWorkspace();
         assertNull(workspace.getProperties().get(DslUtils.STRUCTURIZR_DSL_PROPERTY_NAME));
+    }
+
+    @Test
+    void test_archetypes_WhenDisabled() throws Exception {
+        try {
+            File parentDslFile = new File("src/test/resources/dsl/archetypes.dsl");
+            StructurizrDslParser parser = new StructurizrDslParser();
+            parser.parse(parentDslFile);
+            fail();
+        } catch (StructurizrDslParserException e) {
+            assertTrue(e.getMessage().startsWith("Unexpected tokens (expected: !identifiers, group, person, softwareSystem, deploymentEnvironment, element, ->) at line 4"));
+            assertTrue(e.getMessage().endsWith("archetypes {"));
+        }
+    }
+
+    @Test
+    void test_archetypes_WhenEnabled() throws Exception {
+        File parentDslFile = new File("src/test/resources/dsl/archetypes.dsl");
+        StructurizrDslParser parser = new StructurizrDslParser();
+        parser.getFeatures().enable(Features.ARCHETYPES);
+        parser.parse(parentDslFile);
+        Workspace workspace = parser.getWorkspace();
+
+        Container customerApi = workspace.getModel().getSoftwareSystemWithName("X").getContainerWithName("Customer API");
+        assertTrue(customerApi.getTagsAsSet().contains("Application"));
+        assertTrue(customerApi.getTagsAsSet().contains("Spring Boot"));
+        assertEquals("Spring Boot", customerApi.getTechnology());
     }
 
 }
